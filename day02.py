@@ -20,7 +20,18 @@ def solve_part1(lines: list[str]):
 @runner("Day 2", "Part 2")
 def solve_part2(lines: list[str]):
     """part 2 solving function"""
-    return 0
+    l = len(lines)
+    for i in range(l):
+        for j in range(i+1,l,1):
+            diff = set()
+            for x, c in enumerate(lines[i]):
+                if c != lines[j][x]:
+                    diff.add(c)
+                    if len(diff) > 1:
+                        break
+            if len(diff) == 1:
+                return lines[i].replace(diff.pop(),"")
+    return ""
 
 # Data
 data = read_lines("input/day02/input.txt")
@@ -31,11 +42,18 @@ abcccd
 aabcdd
 abcdee
 ababab""".splitlines()
+sample2 = """abcde
+fghij
+klmno
+pqrst
+fguij
+axcye
+wvxyz""".splitlines()
 
 # Part 1
 assert solve_part1(sample) == 12
 assert solve_part1(data) == 5704
 
 # Part 2
-assert solve_part2(sample) == 0
-assert solve_part2(data) == 0
+assert solve_part2(sample2) == "fgij"
+assert solve_part2(data) == "umdryabviapkozistwcnihjqx"
