@@ -20,16 +20,37 @@ def solve_part1(claims: list[str]):
     return overlap
 
 @runner("Day 3", "Part 2")
-def solve_part2(claims: list[str]):
+def solve_part2(lines: list[str]):
     """part 2 solving function"""
+    claimed = {}
+    claims = []
+    for c in lines:
+        claim = Claim(c)
+        claims.append(claim)
+        for x in range(claim.x, claim.x + claim.width, 1):
+            for y in range(claim.y, claim.y + claim.height, 1):
+                loc = (x, y)
+                claimed[loc] = claimed.get(loc, 0) + 1
+    for claim in claims:
+        overlap = False
+        for x in range(claim.x, claim.x + claim.width, 1):
+            for y in range(claim.y, claim.y + claim.height, 1):
+                loc = (x, y)
+                if claimed[loc] > 1:
+                    overlap = True
+                    break
+            if overlap:
+                break
+        if not overlap:
+            return claim.id
     return 0
 
 claim_extract = re.compile(r'#([0-9]*) @ ([0-9]*),([0-9]*): ([0-9]*)x([0-9]*)')
 
 class Claim:
-    """plant region definition"""
-    def __init__(self, input: str) -> None:
-        s = claim_extract.search(input)
+    """claim definition"""
+    def __init__(self, s: str) -> None:
+        s = claim_extract.search(s)
         self.id = int(s.group(1))
         self.x = int(s.group(2))
         self.y = int(s.group(3))
@@ -50,5 +71,5 @@ assert solve_part1(sample) == 4
 assert solve_part1(data) == 100595
 
 # Part 2
-assert solve_part2(sample) == 0
-assert solve_part2(data) == 0
+assert solve_part2(sample) == 3
+assert solve_part2(data) == 415
