@@ -10,7 +10,13 @@ def solve_part1(line: str):
 @runner("Day 5", "Part 2")
 def solve_part2(line: str):
     """part 2 solving function"""
-    return 0
+    min_polymer = None
+    for i in range(26):
+        c = chr(ord('a') + i)
+        s = len(reduce(clean(line, c)))
+        if min_polymer is None or s < min_polymer:
+            min_polymer = s
+    return min_polymer
 
 def reduce(polymer: str) -> str:
     """reduce the colliding polymers"""
@@ -31,6 +37,16 @@ def reduce(polymer: str) -> str:
             break
     return polymer
 
+def clean(polymer: str, unit: chr) -> str:
+    """clean the supplied polymer of supplied units"""
+    uunit = str(unit).upper()[0]
+    output = ""
+    for c in polymer:
+        if c == unit or c == uunit:
+            continue
+        output += c
+    return output
+
 # Data
 data = read_lines("input/day05/input.txt")[0]
 sample = """dabAcCaCBAcCcaDA""".splitlines()[0]
@@ -40,5 +56,5 @@ assert solve_part1(sample) == 10
 assert solve_part1(data) == 11754
 
 # Part 2
-assert solve_part2(sample) == 0
-assert solve_part2(data) == 0
+assert solve_part2(sample) == 4
+assert solve_part2(data) == 4098
