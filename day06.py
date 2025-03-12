@@ -48,9 +48,30 @@ def solve_part1(lines: list[str]) -> int:
     return flarge
 
 @runner("Day 6", "Part 2")
-def solve_part2(lines: list[str]) -> int:
+def solve_part2(lines: list[str], constraint: int) -> int:
     """part 2 solving function"""
-    return 0
+    coords = parse_coordinates(lines)
+    min_x, min_y, max_x, max_y = None, None, None, None
+    for x, y in coords:
+        if min_x is None or x < min_x:
+            min_x = x
+        if max_x is None or x > max_x:
+            max_x = x
+        if min_y is None or y < min_y:
+            min_y = y
+        if max_y is None or y > max_y:
+            max_y = y
+    count = 0
+    for x in range(min_x-1, max_x+2):
+        for y in range(min_y-1, max_y+2):
+            s = 0
+            for coord in coords:
+                s += distance(coord, (x,y))
+                if s >= constraint:
+                    break
+            else:
+                count += 1
+    return count
 
 def parse_coordinates(lines: list[str]) -> set[tuple[int,int]]:
     """parse coordinate set from input lines"""
@@ -78,5 +99,5 @@ assert solve_part1(sample) == 17
 assert solve_part1(data) == 4754
 
 # Part 2
-assert solve_part2(sample) == 0
-assert solve_part2(data) == 0
+assert solve_part2(sample, 32) == 16
+assert solve_part2(data, 10000) == 42344
