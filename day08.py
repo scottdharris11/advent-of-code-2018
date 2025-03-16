@@ -6,25 +6,46 @@ from utilities.runner import runner
 def solve_part1(line: str) -> int:
     """part 1 solving function"""
     values = parse_integers(line, " ")
-    ms, _ = metadata(values)
+    ms, _ = metadata1(values)
     return ms
 
 @runner("Day 8", "Part 2")
 def solve_part2(line: str) -> int:
     """part 2 solving function"""
-    return 0
+    values = parse_integers(line, " ")
+    ms, _ = metadata2(values)
+    return ms
 
-def metadata(values: list[int]) -> tuple[int,int]:
+def metadata1(values: list[int]) -> tuple[int,int]:
     """calculate the sum of metadata within the node values"""
     ms = 0
     n_count = values[0]
     m_count = values[1]
     idx = 2
     for _ in range(n_count):
-        m, i = metadata(values[idx:])
+        m, i = metadata1(values[idx:])
         ms += m
         idx += i
     ms += sum(values[idx:idx+m_count])
+    return ms, idx + m_count
+
+def metadata2(values: list[int]) -> tuple[int,int]:
+    """calculate the sum of metadata within the node values"""
+    n_count = values[0]
+    m_count = values[1]
+    idx = 2
+    ms = 0
+    if n_count > 0:
+        node_values = []
+        for _ in range(n_count):
+            m, i = metadata2(values[idx:])
+            node_values.append(m)
+            idx += i
+        for i in values[idx:idx+m_count]:
+            if i <= len(node_values):
+                ms += node_values[i-1]
+    else:
+        ms += sum(values[idx:idx+m_count])
     return ms, idx + m_count
 
 # Data
@@ -36,5 +57,5 @@ assert solve_part1(sample) == 138
 assert solve_part1(data) == 44893
 
 # Part 2
-assert solve_part2(sample) == 0
-assert solve_part2(data) == 0
+assert solve_part2(sample) == 66
+assert solve_part2(data) == 27433
