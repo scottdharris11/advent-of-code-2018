@@ -26,7 +26,7 @@ def solve_part2(lines: list[str], workers: int, duration: int):
     queue, steps, depends = parse_steps(lines)
     seconds = 0
     inprogress = {}
-    while len(queue) > 0 or len(inprogress) > 0:
+    while True:
         remove = []
         for i, d in inprogress.items():
             if d == seconds:
@@ -43,8 +43,10 @@ def solve_part2(lines: list[str], workers: int, duration: int):
             queue.sort(reverse=True)
             step = queue.pop()
             inprogress[step] = seconds + duration + (ord(step) - ord('A') + 1)
-        seconds += 1
-    return seconds - 1
+        if len(inprogress) == 0:
+            break
+        seconds = min(inprogress.values())
+    return seconds
 
 def parse_steps(lines: list[str]) -> tuple[list[str],dict[str,list[str]],dict[str,list[str]]]:
     """parse the step dependencies from the input"""
