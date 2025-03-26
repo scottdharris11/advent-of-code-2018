@@ -89,21 +89,21 @@ class CartMap:
     def tick(self) -> list[tuple[int,int]]:
         """move carts a tick and detect collisions"""
         collisions = []
-        locations = {}
-        crash = []
+        crashed = []
         self.carts.sort()
         for i, c in enumerate(self.carts):
             l = c.move(self.track)
-            if l in locations:
-                collisions.append(l)
-                crash.append(i)
-                crash.append(locations[l])
-            else:
-                locations[l] = i
-        if len(crash) > 0:
+            for ci, cc in enumerate(self.carts):
+                if i == ci:
+                    continue
+                if c == cc:
+                    collisions.append(l)
+                    crashed.append(i)
+                    crashed.append(ci)
+        if len(crashed) > 0:
             ncarts = []
             for i, c in enumerate(self.carts):
-                if i in crash:
+                if i in crashed:
                     continue
                 ncarts.append(c)
             self.carts = ncarts
@@ -132,4 +132,4 @@ assert solve_part1(data) == "129,50"
 # Part 2
 assert solve_part2(sample) == "None"
 assert solve_part2(sample2) == "6,4"
-assert solve_part2(data) == ""
+assert solve_part2(data) == "69,73"
