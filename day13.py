@@ -96,6 +96,7 @@ class CartMap:
                     collisions.append(l)
                     crashed.append(i)
                     crashed.append(ci)
+                    break
         if len(crashed) > 0:
             ncarts = []
             for i, c in enumerate(self.carts):
