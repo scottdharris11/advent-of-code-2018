@@ -9,15 +9,27 @@ def solve_part1(lines: list[str]) -> str:
     collision = "None"
     while True:
         c = cm.tick()
-        if c is not None:
-            collision = f"{c[0]},{c[1]}"
+        if len(c) > 0:
+            collision = f"{c[0][0]},{c[0][1]}"
             break
     return collision
 
 @runner("Day 13", "Part 2")
-def solve_part2(lines: list[str]) -> int:
+def solve_part2(lines: list[str]) -> str:
     """part 2 solving function"""
-    return 0
+    cm = CartMap(lines)
+    last = "None"
+    ticks = 0
+    while True:
+        cm.tick()
+        ticks += 1
+        if ticks % 1000000 == 0:
+            print(f"tick {ticks}: ${cm.carts}")
+        if len(cm.carts) == 1:
+            last = f"{cm.carts[0].x},{cm.carts[0].y}"
+        if len(cm.carts) <= 1:
+            break
+    return last
 
 MOVES = {'>': (1,0), 'v': (0,1), '<': (-1,0), '^': (0,-1)}
 DIRECTIONS = ['>', 'v', '<', '^']
@@ -43,25 +55,21 @@ class Cart:
         return self.x == other.x and self.y == other.y
 
     def move(self, track: dict[tuple[int,int],chr]) -> tuple[int,int]:
-        """move the cart based on the track"""
-        move = MOVES[DIRECTIONS[self.direction]]
-        self.x += move[0]
-        self.y += move[1]
+        """move and turn the cart based on the track"""
+        move_x, move_y = MOVES[DIRECTIONS[self.direction]]
+        self.x += move_x
+        self.y += move_y
         match track[(self.x, self.y)]:
-            case '|' | '-':
-                return self.x, self.y
             case '/':
                 self.direction += 1 if DIRECTIONS[self.direction] in ['^','v'] else -1
             case '\\':
                 self.direction += 1 if DIRECTIONS[self.direction] in ['>','<'] else -1
             case '+':
                 self.direction += TURNS[self.turn]
-                self.turn += 1
-                if self.turn == len(TURNS):
-                    self.turn = 0
+                self.turn = (self.turn + 1) % len(TURNS)
         if self.direction < 0:
             self.direction = len(DIRECTIONS)-1
-        if self.direction >= len(DIRECTIONS):
+        elif self.direction == len(DIRECTIONS):
             self.direction = 0
         return self.x, self.y
 
@@ -78,19 +86,28 @@ class CartMap:
                     self.track[(x,y)] = "-"
                     self.carts.append(Cart(x, y, DIRECTIONS.index(col)))
 
-    def tick(self) -> tuple[int,int]:
+    def tick(self) -> list[tuple[int,int]]:
         """move carts a tick and detect collisions"""
         collisions = []
-        locations = set()
+        locations = {}
+        crash = []
         self.carts.sort()
-        for c in self.carts:
+        for i, c in enumerate(self.carts):
             l = c.move(self.track)
             if l in locations:
                 collisions.append(l)
-            locations.add(l)
-        if len(collisions) > 0:
-            return collisions[0]
-        return None
+                crash.append(i)
+                crash.append(locations[l])
+            else:
+                locations[l] = i
+        if len(crash) > 0:
+            ncarts = []
+            for i, c in enumerate(self.carts):
+                if i in crash:
+                    continue
+                ncarts.append(c)
+            self.carts = ncarts
+        return collisions
 
 # Data
 data = read_lines("input/day13/input.txt")
@@ -100,11 +117,19 @@ sample = r"""/->-\
 | | |  | v  |
 \-+-/  \-+--/
   \------/   """.splitlines()
+sample2 = r"""/>-<\  
+|   |  
+| /<+-\
+| | | v
+\>+</ |
+  |   ^
+  \<->/""".splitlines()
 
 # Part 1
 assert solve_part1(sample) == "7,3"
 assert solve_part1(data) == "129,50"
 
 # Part 2
-assert solve_part2(sample) == 0
-assert solve_part2(data) == 0
+assert solve_part2(sample) == "None"
+assert solve_part2(sample2) == "6,4"
+assert solve_part2(data) == ""
