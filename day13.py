@@ -19,12 +19,8 @@ def solve_part2(lines: list[str]) -> str:
     """part 2 solving function"""
     cm = CartMap(lines)
     last = "None"
-    ticks = 0
     while True:
         cm.tick()
-        ticks += 1
-        if ticks % 1000000 == 0:
-            print(f"tick {ticks}: ${cm.carts}")
         if len(cm.carts) == 1:
             last = f"{cm.carts[0].x},{cm.carts[0].y}"
         if len(cm.carts) <= 1:
