@@ -158,17 +158,17 @@ class UnitMap:
             targets.append(u)
         return targets
 
-    def open_squares(self, targets: list[Unit]) -> set[tuple[int,int]]:
+    def open_squares(self, targets: list[Unit]) -> list[tuple[int,int]]:
         """find open spaces around the supplied targets"""
-        spaces = set()
+        spaces = []
         for t in targets:
             for move in [(0,-1),(-1,0),(1,0),(0,1)]:
                 l = (t.loc[0]+move[0], t.loc[1]+move[1])
-                if l in self.spaces:
-                    spaces.add(l)
+                if l in self.spaces and l not in spaces:
+                    spaces.append(l)
         return spaces
 
-    def next_move(self, unit: Unit, goals: set[tuple[int,int]]) -> tuple[int,int]:
+    def next_move(self, unit: Unit, goals: list[tuple[int,int]]) -> tuple[int,int]:
         """determine the next move for a unit"""
         nearest = 0
         best = None
@@ -180,7 +180,7 @@ class UnitMap:
                 if start not in self.spaces:
                     continue
                 if start == goal:
-                    if nearest == 0:
+                    if nearest == 0 or nearest > 1:
                         return goal
                 md = abs(start[0]-goal[0]) + abs(start[1]-goal[1])
                 if nearest > 0 and md > nearest:
@@ -248,7 +248,7 @@ assert solve_part1(sample3) == 39514
 assert solve_part1(sample4) == 27755
 assert solve_part1(sample5) == 28944
 assert solve_part1(sample6) == 18740
-assert solve_part1(data) == 0 #<266496
+assert solve_part1(data) == 250648
 
 # Part 2
 assert solve_part2(data) == 0
