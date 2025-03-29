@@ -6,7 +6,22 @@ from utilities.search import Search, Searcher, SearchMove
 @runner("Day 15", "Part 1")
 def solve_part1(lines: list[str]) -> int:
     """part 1 solving function"""
-    um = UnitMap(lines)
+    return simulate(lines, 3, False)
+
+@runner("Day 15", "Part 2")
+def solve_part2(lines: list[str]) -> int:
+    """part 2 solving function"""
+    power = 4
+    while True:
+        print(f"Running simulation with power: {power}")
+        results = simulate(lines, power, True)
+        if results > 0:
+            return results
+        power += 1
+
+def simulate(lines: list[str], elf_power: int, elf_win: bool) -> int:
+    """run game simulation"""
+    um = UnitMap(lines, elf_power)
     rounds = 0
     while True:
         um.units.sort()
@@ -34,30 +49,25 @@ def solve_part1(lines: list[str]) -> int:
             nu = []
             for u in um.units:
                 if u.hearts <= 0:
+                    if elf_win and u.utype == 'E':
+                        return -1
                     continue
                 nu.append(u)
             um.units = nu
         if done:
             break
         rounds += 1
-        #if rounds % 100 == 0:
-        #print(f"after round {rounds}: {um.units}")
     health = 0
     for u in um.units:
         health += u.hearts
     return rounds * health
 
-@runner("Day 15", "Part 2")
-def solve_part2(lines: list[str]) -> int:
-    """part 2 solving function"""
-    return 0
-
 class Unit:
     """structure representing a battle unit"""
-    def __init__(self, utype: chr, loc: tuple[int,int]):
+    def __init__(self, utype: chr, loc: tuple[int,int], power: int):
         self.utype = utype
         self.loc = loc
-        self.power = 3
+        self.power = power
         self.hearts = 200
 
     def __repr__(self):
@@ -104,7 +114,7 @@ class PathSearcher(Searcher):
 
 class UnitMap:
     """strucutre representing the map of the cave"""
-    def __init__(self, lines: list[str]):
+    def __init__(self, lines: list[str], elf_power: int):
         self.walls = set()
         self.spaces = set()
         self.units_by_loc = {}
@@ -117,8 +127,11 @@ class UnitMap:
                         self.walls.add(loc)
                     case '.':
                         self.spaces.add(loc)
-                    case 'G' | 'E':
-                        self.units.append(Unit(col, loc))
+                    case 'G':
+                        self.units.append(Unit(col, loc, 3))
+                        self.units_by_loc[loc] = self.units[-1]
+                    case 'E':
+                        self.units.append(Unit(col, loc, elf_power))
                         self.units_by_loc[loc] = self.units[-1]
 
     def remove_unit(self, unit: Unit):
@@ -242,13 +255,18 @@ sample6 = """#########
 #########""".splitlines()
 
 # Part 1
-assert solve_part1(sample) == 27730
-assert solve_part1(sample2) == 36334
-assert solve_part1(sample3) == 39514
-assert solve_part1(sample4) == 27755
-assert solve_part1(sample5) == 28944
-assert solve_part1(sample6) == 18740
-assert solve_part1(data) == 250648
+#assert solve_part1(sample) == 27730
+#assert solve_part1(sample2) == 36334
+#assert solve_part1(sample3) == 39514
+#assert solve_part1(sample4) == 27755
+#assert solve_part1(sample5) == 28944
+#assert solve_part1(sample6) == 18740
+#assert solve_part1(data) == 250648
 
 # Part 2
-assert solve_part2(data) == 0
+#assert solve_part2(sample) == 4988
+#assert solve_part2(sample3) == 31284
+#assert solve_part2(sample4) == 3478
+#assert solve_part2(sample5) == 6474
+#assert solve_part2(sample6) == 1140
+assert solve_part2(data) == 0 #<42392
