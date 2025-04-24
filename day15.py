@@ -11,13 +11,27 @@ def solve_part1(lines: list[str]) -> int:
 @runner("Day 15", "Part 2")
 def solve_part2(lines: list[str]) -> int:
     """part 2 solving function"""
-    power = 4
+    min_power = 4
+    max_power = 100
+    power = min_power
+    scores = {}
     while True:
-        print(f"Running simulation with power: {power}")
-        results = simulate(lines, power, True)
-        if results > 0:
-            return results
-        power += 1
+        if power in scores:
+            result = scores[power]
+        else:
+            result = simulate(lines, power, True)
+            scores[power] = result
+        if result > 0:
+            max_power = power
+            if max_power == min_power or max_power - 1 == min_power:
+                return result
+        else:
+            min_power = power
+            if min_power + 1 == max_power:
+                power = max_power
+                continue
+        power = min_power + ((max_power - min_power) // 2)
+
 
 def simulate(lines: list[str], elf_power: int, elf_win: bool) -> int:
     """run game simulation"""
@@ -36,7 +50,7 @@ def simulate(lines: list[str], elf_power: int, elf_win: bool) -> int:
                 if len(t) == 0:
                     done = True
                     break
-                spaces = um.open_squares(t)
+                spaces = um.open_squares(u, t)
                 move = um.next_move(u, spaces)
                 if move is not None:
                     um.move_unit(u, move)
@@ -90,9 +104,10 @@ class Unit:
 
 class PathSearcher(Searcher):
     """path search implementation for the maze"""
-    def __init__(self, spaces: set[tuple[int,int]], goal: tuple[int,int]) -> None:
-        self.spaces = spaces
-        self.goal = goal
+    def __init__(self, s: set[tuple[int,int]], g: tuple[int,int], c: tuple[int,int]) -> None:
+        self.spaces = s
+        self.goal = g
+        self.current = c
 
     def is_goal(self, obj: tuple[int,int]) -> bool:
         """determine if the supplied state is the goal location"""
@@ -103,7 +118,7 @@ class PathSearcher(Searcher):
         moves = []
         for m in [(1,0),(-1,0),(0,1),(0,-1)]:
             loc = (obj[0] + m[0], obj[1] + m[1])
-            if loc not in self.spaces:
+            if loc not in self.spaces and loc != self.current:
                 continue
             moves.append(SearchMove(1,loc))
         return moves
@@ -150,7 +165,7 @@ class UnitMap:
         unit.loc = loc
 
     def should_attack(self, unit: Unit) -> Unit:
-        """determine if the supplied unit can attack and do so"""
+        """determine if the supplied unit can attack and select target"""
         target = None
         for move in [(0,-1),(-1,0),(1,0),(0,1)]:
             l = (unit.loc[0]+move[0], unit.loc[1]+move[1])
@@ -171,22 +186,28 @@ class UnitMap:
             targets.append(u)
         return targets
 
-    def open_squares(self, targets: list[Unit]) -> list[tuple[int,int]]:
+    def open_squares(self, unit: Unit, targets: list[Unit]) -> list[tuple[tuple[int,int],int]]:
         """find open spaces around the supplied targets"""
         spaces = []
         for t in targets:
             for move in [(0,-1),(-1,0),(1,0),(0,1)]:
                 l = (t.loc[0]+move[0], t.loc[1]+move[1])
                 if l in self.spaces and l not in spaces:
-                    spaces.append(l)
+                    rorder = (l[1]*1000) + l[0]
+                    md = abs(unit.loc[0]-l[0]) + abs(unit.loc[1]-l[1])
+                    sorder = (md * 100000) + rorder
+                    spaces.append((l,sorder,rorder))
+        spaces.sort(key=lambda x: x[1])
         return spaces
 
-    def next_move(self, unit: Unit, goals: list[tuple[int,int]]) -> tuple[int,int]:
+    def next_move(self, unit: Unit, spaces: list[tuple[tuple[int,int],int]]) -> tuple[int,int]:
         """determine the next move for a unit"""
         nearest = 0
         best = None
-        for goal in goals:
-            ps = PathSearcher(self.spaces, goal)
+        rorder = 0
+        for space in spaces:
+            goal = space[0]
+            ps = PathSearcher(self.spaces, goal, unit.loc)
             s = Search(ps)
             for move in [(0,-1),(-1,0),(1,0),(0,1)]:
                 start = (unit.loc[0]+move[0], unit.loc[1]+move[1])
@@ -202,9 +223,12 @@ class UnitMap:
                 solution = s.best(SearchMove(0, start))
                 if solution is None:
                     continue
-                if nearest == 0 or solution.cost < nearest:
+                if nearest == 0 or \
+                   (solution.cost < nearest) or \
+                   (solution.cost == nearest and space[2] < rorder):
                     nearest = solution.cost
                     best = start
+                    rorder = space[2]
         return best
 
 # Data
@@ -255,18 +279,18 @@ sample6 = """#########
 #########""".splitlines()
 
 # Part 1
-#assert solve_part1(sample) == 27730
-#assert solve_part1(sample2) == 36334
-#assert solve_part1(sample3) == 39514
-#assert solve_part1(sample4) == 27755
-#assert solve_part1(sample5) == 28944
-#assert solve_part1(sample6) == 18740
-#assert solve_part1(data) == 250648
+assert solve_part1(sample) == 27730
+assert solve_part1(sample2) == 36334
+assert solve_part1(sample3) == 39514
+assert solve_part1(sample4) == 27755
+assert solve_part1(sample5) == 28944
+assert solve_part1(sample6) == 18740
+assert solve_part1(data) == 250648
 
 # Part 2
-#assert solve_part2(sample) == 4988
-#assert solve_part2(sample3) == 31284
-#assert solve_part2(sample4) == 3478
-#assert solve_part2(sample5) == 6474
-#assert solve_part2(sample6) == 1140
-assert solve_part2(data) == 0 #<42392
+assert solve_part2(sample) == 4988
+assert solve_part2(sample3) == 31284
+assert solve_part2(sample4) == 3478
+assert solve_part2(sample5) == 6474
+assert solve_part2(sample6) == 1140
+assert solve_part2(data) == 42224
