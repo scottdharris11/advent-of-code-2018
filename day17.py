@@ -10,7 +10,7 @@ parse_x = re.compile(r"x=([0-9]+)(\.\.)*([0-9]+)*")
 def solve_part1(lines: list[str]) -> int:
     """part 1 solving function"""
     clay, min_y, max_y = parse_clay(lines)
-    water = flow(clay, min_y, max_y)
+    water = flow(clay, max_y)
     print_grid(clay, water)
     count = 0
     for l, _ in water.items():
@@ -38,7 +38,7 @@ class Water:
     def __repr__(self):
         return str((self.loc, self.flowing))
 
-def flow(clay: set[tuple[int,int]], min_y: int, max_y: int) -> dict[tuple[int,int],Water]:
+def flow(clay: set[tuple[int,int]], max_y: int) -> dict[tuple[int,int],Water]:
     """initiate flow and count water"""
     queue = []
     current = Water((500,0), None, FLOW_DOWN)
@@ -55,7 +55,9 @@ def flow(clay: set[tuple[int,int]], min_y: int, max_y: int) -> dict[tuple[int,in
             elif is_water and water[below].flowing:
                 pass
             else:
-                if current.flow_dir == FLOW_DOWN:
+                if not current.flowing:
+                    queue.append(current.source)
+                elif current.flow_dir == FLOW_DOWN:
                     left = (current.loc[0]-1,current.loc[1])
                     left_clay = left in clay
                     left_water = left in water
@@ -80,7 +82,23 @@ def flow(clay: set[tuple[int,int]], min_y: int, max_y: int) -> dict[tuple[int,in
                 else:
                     next_loc = (current.loc[0]+current.flow_dir[0], current.loc[1])
                     if next_loc in clay or next_loc in water:
-                        current.flowing = False
+                        # check the reverse direction until hit either clay or no water.
+                        # if clay encountered, then stop flow of all water points.
+                        points = [current.loc]
+                        reverse = current.flow_dir[0]*-1
+                        prev_loc = current.loc
+                        flow_stop = False
+                        while True:
+                            prev_loc = (prev_loc[0]+reverse, prev_loc[1])
+                            if prev_loc in clay:
+                                flow_stop = True
+                                break
+                            if prev_loc not in water:
+                                break
+                            points.append(prev_loc)
+                        if flow_stop:
+                            for p in points:
+                                water[p].flowing = False
                         queue.append(current.source)
                     else:
                         w = Water(next_loc, current, current.flow_dir)
@@ -160,7 +178,7 @@ y=13, x=498..504""".splitlines()
 
 # Part 1
 assert solve_part1(sample) == 57
-assert solve_part1(data) == 0 #<38039
+assert solve_part1(data) == 29741
 
 # Part 2
 assert solve_part2(sample) == 0
