@@ -47,73 +47,80 @@ class Water:
 
 def flow(clay: set[tuple[int,int]], max_y: int) -> dict[tuple[int,int],Water]:
     """initiate flow and count water"""
-    queue = []
-    current = Water((500,0), None, FLOW_DOWN)
+    queue = [Water((500,0), None, FLOW_DOWN)]
     water = {}
-    while True:
+    while len(queue) > 0:
+        current = queue.pop()
         below = (current.loc[0],current.loc[1]+1)
-        if below[1] <= max_y:
-            is_clay = below in clay
-            is_water = below in water
-            if not is_clay and not is_water:
-                w = Water(below, current, FLOW_DOWN)
+        if below[1] > max_y:
+            # below the max value, infinite at that point so done
+            continue
+        if below not in clay and below not in water:
+            # empty below, flow the water
+            w = Water(below, current, FLOW_DOWN)
+            water[w.loc] = w
+            queue.append(w)
+        elif below in water and water[below].flowing:
+            # below already recorded and flowing, just flow into it
+            pass
+        elif not current.flowing:
+            # on a stopped water spot, queue its source till it
+            # gets back to a flowing entry
+            queue.append(current.source)
+        elif current.flow_dir == FLOW_DOWN:
+            # block below, so check for ability to flow left and right
+            left = (current.loc[0]-1,current.loc[1])
+            left_clay = left in clay
+            left_water = left in water
+            left_water_stopped = left_water and not water[left].flowing
+            left_block = left_clay or left_water_stopped
+            right = (current.loc[0]+1,current.loc[1])
+            right_clay = right in clay
+            right_water = right in water
+            right_water_stopped = right_water and not water[right].flowing
+            right_block = right_clay or right_water_stopped
+            if left_block and right_block:
+                # both left and right blocked, flow should be stopped
+                # and queue its source
+                current.flowing = False
+                queue.append(current.source)
+            if not right_clay and not right_water:
+                # can flow right, queue it
+                w = Water(right, current, FLOW_RIGHT)
                 water[w.loc] = w
                 queue.append(w)
-            elif is_water and water[below].flowing:
-                pass
+            if not left_clay and not left_water:
+                # can flow left, queue it
+                w = Water(left, current, FLOW_LEFT)
+                water[w.loc] = w
+                queue.append(w)
+        else:
+            # current is a left/right flow, so check next location in the flow direction 
+            next_loc = (current.loc[0]+current.flow_dir[0], current.loc[1])
+            if next_loc in clay or next_loc in water:
+                # check the reverse direction until hit either clay or no water.
+                # if clay encountered, then stop flow of all water points.
+                points = [current.loc]
+                reverse = current.flow_dir[0]*-1
+                prev_loc = current.loc
+                flow_stop = False
+                while True:
+                    prev_loc = (prev_loc[0]+reverse, prev_loc[1])
+                    if prev_loc in clay:
+                        flow_stop = True
+                        break
+                    if prev_loc not in water:
+                        break
+                    points.append(prev_loc)
+                if flow_stop:
+                    for p in points:
+                        water[p].flowing = False
+                queue.append(current.source)
             else:
-                if not current.flowing:
-                    queue.append(current.source)
-                elif current.flow_dir == FLOW_DOWN:
-                    left = (current.loc[0]-1,current.loc[1])
-                    left_clay = left in clay
-                    left_water = left in water
-                    left_water_stopped = left_water and not water[left].flowing
-                    left_block = left_clay or left_water_stopped
-                    right = (current.loc[0]+1,current.loc[1])
-                    right_clay = right in clay
-                    right_water = right in water
-                    right_water_stopped = right_water and not water[right].flowing
-                    right_block = right_clay or right_water_stopped
-                    if left_block and right_block:
-                        current.flowing = False
-                        queue.append(current.source)
-                    if not right_clay and not right_water:
-                        w = Water(right, current, FLOW_RIGHT)
-                        water[w.loc] = w
-                        queue.append(w)
-                    if not left_clay and not left_water:
-                        w = Water(left, current, FLOW_LEFT)
-                        water[w.loc] = w
-                        queue.append(w)
-                else:
-                    next_loc = (current.loc[0]+current.flow_dir[0], current.loc[1])
-                    if next_loc in clay or next_loc in water:
-                        # check the reverse direction until hit either clay or no water.
-                        # if clay encountered, then stop flow of all water points.
-                        points = [current.loc]
-                        reverse = current.flow_dir[0]*-1
-                        prev_loc = current.loc
-                        flow_stop = False
-                        while True:
-                            prev_loc = (prev_loc[0]+reverse, prev_loc[1])
-                            if prev_loc in clay:
-                                flow_stop = True
-                                break
-                            if prev_loc not in water:
-                                break
-                            points.append(prev_loc)
-                        if flow_stop:
-                            for p in points:
-                                water[p].flowing = False
-                        queue.append(current.source)
-                    else:
-                        w = Water(next_loc, current, current.flow_dir)
-                        water[w.loc] = w
-                        queue.append(w)
-        if len(queue) == 0:
-            break
-        current = queue.pop()
+                # can flow into spot
+                w = Water(next_loc, current, current.flow_dir)
+                water[w.loc] = w
+                queue.append(w)
     return water
 
 def parse_clay(lines: list[str]) -> tuple[set[tuple[int,int]],int,int]:
