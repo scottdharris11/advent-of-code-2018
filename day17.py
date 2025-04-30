@@ -11,7 +11,7 @@ def solve_part1(lines: list[str]) -> int:
     """part 1 solving function"""
     clay, min_y, max_y = parse_clay(lines)
     water = flow(clay, max_y)
-    print_grid(clay, water)
+    #print_grid(clay, water)
     count = 0
     for l, _ in water.items():
         if l[1] >= min_y:
@@ -21,7 +21,14 @@ def solve_part1(lines: list[str]) -> int:
 @runner("Day 17", "Part 2")
 def solve_part2(lines: list[str]) -> int:
     """part 2 solving function"""
-    return 0
+    clay, _, max_y = parse_clay(lines)
+    water = flow(clay, max_y)
+    #print_grid(clay, water)
+    count = 0
+    for _, w in water.items():
+        if not w.flowing:
+            count += 1
+    return count
 
 FLOW_DOWN = (0,1)
 FLOW_LEFT = (-1,0)
@@ -181,5 +188,5 @@ assert solve_part1(sample) == 57
 assert solve_part1(data) == 29741
 
 # Part 2
-assert solve_part2(sample) == 0
-assert solve_part2(data) == 0
+assert solve_part2(sample) == 29
+assert solve_part2(data) == 24198
