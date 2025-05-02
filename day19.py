@@ -5,9 +5,27 @@ from utilities.runner import runner
 @runner("Day 19", "Part 1")
 def solve_part1(lines: list[str]) -> int:
     """part 1 solving function"""
-    ins_register = int(lines[0][4:])
-    instructions = lines[1:]
     registers = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0}
+    execute(registers, int(lines[0][4:]), lines[1:])
+    return registers[0]
+
+@runner("Day 19", "Part 2")
+def solve_part2(base: int) -> int:
+    """part 2 solving function"""
+    # program first computes a base number:
+    #   when 0 (part 1), it is 1028
+    #   when 1, it is 10551428
+    # then it finds all of the even divisors of it and adds them
+    # to the output register 0, but without using a modulus operator.
+    # simulating that behavior here to arrive at the number.
+    output = 1 + base
+    for i in range(2, (base//2)+1):
+        if base % i == 0:
+            output += i
+    return output
+
+def execute(registers: dict[int,int], ins_register: int, instructions: list[str]):
+    """execute the program until completion"""
     while True:
         ins_idx = registers[ins_register]
         if ins_idx < 0 or ins_idx >= len(instructions):
@@ -17,12 +35,6 @@ def solve_part1(lines: list[str]) -> int:
         a, b, c, *_ = parse_integers(instruction[5:], " ")
         cmd(registers, a, b, c)
         registers[ins_register] = registers[ins_register] + 1
-    return registers[0]
-
-@runner("Day 19", "Part 2")
-def solve_part2(lines: list[str]) -> int:
-    """part 2 solving function"""
-    return 0
 
 def addr(r: dict[int,int], a: int, b: int, c: int):
     """add register"""
@@ -111,5 +123,5 @@ assert solve_part1(sample) == 7
 assert solve_part1(data) == 1806
 
 # Part 2
-assert solve_part2(sample) == 0
-assert solve_part2(data) == 0
+assert solve_part2(1028) == 1806
+assert solve_part2(10551428) == 18741072
