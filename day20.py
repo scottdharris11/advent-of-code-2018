@@ -31,7 +31,27 @@ def solve_part1(line: str) -> int:
 @runner("Day 20", "Part 2")
 def solve_part2(line: str) -> int:
     """part 2 solving function"""
-    return 0
+    rooms = set()
+    doors = set()
+    rooms.add((0,0))
+    chart_rooms(line[1:-1], (0,0), rooms, doors, set())
+    locations = []
+    for r in rooms:
+        locations.append((md((0,0), r), r))
+    locations.sort(key=lambda x: x[0])
+    over1000 = 0
+    while len(rooms) > 0:
+        _, loc = locations.pop()
+        if loc not in rooms:
+            continue
+        s = Search(PathSearcher(doors, loc))
+        solution = s.best(SearchMove(0, (0,0)))
+        for i, p in enumerate(solution.path):
+            if p in rooms:
+                if i >= 1000:
+                    over1000 += 1
+                rooms.remove(p)
+    return over1000
 
 MOVES = {'E': (1,0), 'W': (-1,0), 'N': (0,-1), 'S': (0,1)}
 def chart_rooms(path: str, loc: tuple[int,int], rooms: set[tuple[int,int]], doors: set[tuple[int,int]], prev):
@@ -116,4 +136,4 @@ assert solve_part1(sample5) == 31
 assert solve_part1(data) == 3725
 
 # Part 2
-assert solve_part2(data) == 0
+assert solve_part2(data) == 8541
