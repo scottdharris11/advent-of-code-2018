@@ -1,6 +1,7 @@
 """utility imports"""
 from utilities.data import read_lines
 from utilities.runner import runner
+from utilities.search import Search, Searcher, SearchMove
 
 @runner("Day 20", "Part 1")
 def solve_part1(line: str) -> int:
@@ -9,7 +10,23 @@ def solve_part1(line: str) -> int:
     doors = set()
     rooms.add((0,0))
     chart_rooms(line[1:-1], (0,0), rooms, doors, set())
-    return 0
+    locations = []
+    for r in rooms:
+        locations.append((md((0,0), r), r))
+    locations.sort(key=lambda x: x[0])
+    largest = 0
+    while len(rooms) > 0:
+        _, loc = locations.pop()
+        if loc not in rooms:
+            continue
+        s = Search(PathSearcher(doors, loc))
+        solution = s.best(SearchMove(0, (0,0)))
+        if solution.cost > largest:
+            largest = solution.cost
+        for p in solution.path:
+            if p in rooms:
+                rooms.remove(p)
+    return largest
 
 @runner("Day 20", "Part 2")
 def solve_part2(line: str) -> int:
@@ -53,6 +70,35 @@ def split_breaks(path: str, begin: int) -> tuple[list[int],int]:
             if stack == 0:
                 pipes.append(i)
 
+def md(a: tuple[int,int], b: tuple[int,int]) -> int:
+    """compute the manhattan distance between two points"""
+    return abs(a[0]-b[0]) + abs(a[1]-b[1])
+
+class PathSearcher(Searcher):
+    """path search implementation for the area"""
+    def __init__(self, doors: set[tuple[int,int]], g: tuple[int,int]) -> None:
+        self.doors = doors
+        self.goal = g
+
+    def is_goal(self, obj: tuple[int,int]) -> bool:
+        """determine if the supplied state is the goal location"""
+        return obj == self.goal
+
+    def possible_moves(self, obj: tuple[int,int]) -> list[SearchMove]:
+        """determine possible moves from curent location"""
+        moves = []
+        for m in [(1,0),(-1,0),(0,1),(0,-1)]:
+            loc = (obj[0] + m[0], obj[1] + m[1])
+            if loc not in self.doors:
+                continue
+            loc = (loc[0] + m[0], loc[1] + m[1])
+            moves.append(SearchMove(1,loc))
+        return moves
+
+    def distance_from_goal(self, obj: tuple[int,int]) -> int:
+        """calculate distance from the goal"""
+        return md(self.goal, obj)
+
 # Data
 data = read_lines("input/day20/input.txt")[0]
 sample = """^WNE$""".splitlines()[0]
@@ -63,12 +109,11 @@ sample5 = """^WSSEESWWWNW(S|NENNEEEENN(ESSSSW(NWSW|SSEN)|WSWWN(E|WWS(E|SS))))$""
 
 # Part 1
 #assert solve_part1(sample) == 3
-#assert solve_part1(sample2) == 10
-#assert solve_part1(sample3) == 18
-#assert solve_part1(sample4) == 23
-#assert solve_part1(sample5) == 31
-assert solve_part1(data) == 0
+assert solve_part1(sample2) == 10
+assert solve_part1(sample3) == 18
+assert solve_part1(sample4) == 23
+assert solve_part1(sample5) == 31
+assert solve_part1(data) == 3725
 
 # Part 2
-assert solve_part2(sample) == 0
 assert solve_part2(data) == 0
