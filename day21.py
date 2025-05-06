@@ -58,14 +58,7 @@ def main_loop(r1: int) -> int:
         r1 = (((r1 + r5) & 16777215) * 65899) & 16777215 # commands 9-12
         if r2 < 256: # commands 13,14,16,28
             break
-        r5 = 0 # command 17
-        # inner loop (commands 18-25)
-        while True:
-            r4 = (r5 + 1) * 256 # commands 18-19
-            if r4 > r2: # command 20
-                break # commands 21, 23
-            r5 += 1 # command 24
-        r2 = r5 # command 26
+        r2 = r2 // 256 # inner loop (commands 17-25)
     return r1
 
 # Part 1
