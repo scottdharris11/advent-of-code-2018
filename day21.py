@@ -29,7 +29,7 @@ def solve_part2() -> int:
     # as finding all outputs of register 1 until a duplicate is found
     # that would send the program into the infinite loop.  So we will
     # find when the program would have started to loop (duplicate output
-    # of register 1), and then use the previous register 1 value to 
+    # of register 1), and then use the previous register 1 value to
     # effectively stop the program as far along the path as we can.
     seen = set()
     prev = None
