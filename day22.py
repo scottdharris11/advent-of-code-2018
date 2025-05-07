@@ -20,7 +20,7 @@ def solve_part2(lines: list[str]) -> int:
     """part 2 solving function"""
     depth, target = parse_input(lines)
     cave = Cave(depth, target)
-    cave.region(target)
+    cave.region((depth//2,depth//2))
     s = Search(PathSearcher(cave))
     solution = s.best(SearchMove(0,(0,0,TORCH)))
     return solution.cost
