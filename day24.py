@@ -6,10 +6,34 @@ from utilities.runner import runner
 @runner("Day 24", "Part 1")
 def solve_part1(lines: list[str]) -> int:
     """part 1 solving function"""
+    immune, infection = run_simulation(lines, 0)
+    return immune + infection
+
+@runner("Day 24", "Part 2")
+def solve_part2(lines: list[str]) -> int:
+    """part 2 solving function"""
+    boost_min = 0
+    boost_max = 1000
+    win_found = False
+    while True:
+        boost = boost_min + (boost_max - boost_min) // 2
+        immune, _ = run_simulation(lines, boost)
+        if immune == 0:
+            boost_min = boost + 1
+            if not win_found:
+                boost_max += 500
+        else:
+            win_found = True
+            boost_max = boost
+            if boost_max == boost_min:
+                return immune
+
+def run_simulation(lines: list[str], boost: int) -> tuple[int,int]:
+    """run simulation with supplied boost"""
     immune, infection = parse_groups(lines)
-    immune_remain = len(immune)
-    infection_remain = len(infection)
-    while immune_remain > 0 and infection_remain > 0:
+    for i in immune:
+        i.attack += boost
+    while len(immune) > 0 and len(infection) > 0:
         # targeting stage
         immune.sort(key=lambda g: g.effective_power(), reverse=True)
         infection.sort(key=lambda g: g.effective_power(), reverse=True)
@@ -29,35 +53,40 @@ def solve_part1(lines: list[str]) -> int:
         groups.extend(immune)
         groups.extend(infection)
         groups.sort(key=lambda g: g.initiative, reverse=True)
+        groupUpdated = False
         for g in groups:
             if g.units == 0:
                 continue
             if g.target is None:
                 continue
+            before = g.target.units
             g.target.attacked(g.would_damage(g.target))
+            if g.target.units < before:
+                groupUpdated = True
+
+        # check for stalemate (infection wins)
+        if not groupUpdated:
+            infection_remain = 0
+            for i in infection:
+                infection_remain += i.units
+            return 0, infection_remain
 
         # count remaining groups
-        immune_remain = 0
-        for i in immune:
-            if i.units > 0:
-                immune_remain += 1
-        infection_remain = 0
-        for i in infection:
-            if i.units > 0:
-                infection_remain += 1
-    remain = 0
-    if immune_remain > 0:
-        for i in immune:
-            remain += i.units
-    if infection_remain > 0:
-        for i in infection:
-            remain += i.units
-    return remain
+        for i in range(len(immune)-1,-1,-1):
+            if immune[i].units == 0:
+                immune.pop(i)
+        for i in range(len(infection)-1,-1,-1):
+            if infection[i].units == 0:
+                infection.pop(i)
 
-@runner("Day 24", "Part 2")
-def solve_part2(lines: list[str]) -> int:
-    """part 2 solving function"""
-    return 0
+    # count remaining units
+    immune_remain = 0
+    for i in immune:
+        immune_remain += i.units
+    infection_remain = 0
+    for i in infection:
+        infection_remain += i.units
+    return immune_remain, infection_remain
 
 class Group:
     """structure representing unit group"""
@@ -70,9 +99,6 @@ class Group:
         self.weakness = w
         self.immunities = im
         self.target = None
-
-    def __repr__(self):
-        return str((self.units, self.power, self.attack, self.attack_type, self.initiative, self.weakness, self.immunities))
 
     def effective_power(self) -> int:
         """effective power of the group"""
@@ -164,5 +190,5 @@ assert solve_part1(sample) == 5216
 assert solve_part1(data) == 23385
 
 # Part 2
-assert solve_part2(sample) == 0
-assert solve_part2(data) == 0
+assert solve_part2(sample) == 51
+assert solve_part2(data) == 2344
