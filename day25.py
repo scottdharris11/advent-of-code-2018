@@ -5,17 +5,13 @@ from utilities.runner import runner
 @runner("Day 25", "Part 1")
 def solve_part1(lines: list[str]) -> int:
     """part 1 solving function"""
-    points = parse_points(lines)
+    points = [tuple(parse_integers(line,",")) for line in lines]
     links = {}
     for i, a in enumerate(points):
         for b in points[i+1:]:
             if md(a,b) <= 3:
-                l = links.get(a,set())
-                l.add(b)
-                links[a] = l
-                l = links.get(b,set())
-                l.add(a)
-                links[b] = l
+                links.setdefault(a, []).append(b)
+                links.setdefault(b, []).append(a)
     count = 0
     assigned = set()
     for p in points:
@@ -37,13 +33,6 @@ def constellation(point, links, assigned):
 def md(a: tuple[int,int,int,int], b: tuple[int,int,int,int]) -> int:
     """compute distance between two points"""
     return abs(a[0]-b[0]) + abs(a[1]-b[1]) + abs(a[2]-b[2]) + abs(a[3]-b[3])
-
-def parse_points(lines: list[str]) -> list[tuple[int,int,int,int]]:
-    """parse input lines"""
-    points = []
-    for line in lines:
-        points.append(tuple(parse_integers(line,",")))
-    return points
 
 # Data
 data = read_lines("input/day25/input.txt")
